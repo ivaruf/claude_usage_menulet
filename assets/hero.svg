@@ -28,12 +28,12 @@
 
   <g font-family="ui-monospace, 'SF Mono', Menlo, monospace">
     <text x="32" y="80" fill="#ececec">Session</text>
-    <text x="110" y="80"><tspan fill="#D97757">███████</tspan><tspan fill="#4b4b4d">░░░</tspan></text>
+    <text x="110" y="80"><tspan fill="#ececec">███████</tspan><tspan fill="#4b4b4d">░░░</tspan></text>
     <text x="230" y="80" text-anchor="end" fill="#ececec">72%</text>
     <text x="248" y="80" fill="#ececec">resets 12:30 (1h36m)</text>
 
     <text x="32" y="106" fill="#ececec">Week</text>
-    <text x="110" y="106"><tspan fill="#D97757">█</tspan><tspan fill="#4b4b4d">░░░░░░░░░</tspan></text>
+    <text x="110" y="106"><tspan fill="#ececec">█</tspan><tspan fill="#4b4b4d">░░░░░░░░░</tspan></text>
     <text x="230" y="106" text-anchor="end" fill="#ececec">8%</text>
     <text x="248" y="106" fill="#ececec">resets Wed 12 Aug 03:00</text>
   </g>

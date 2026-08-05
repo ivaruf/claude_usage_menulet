@@ -14,6 +14,24 @@ Click the icon for the full breakdown:
 
 The text turns **orange at ≥80%** and **red at ≥95%** usage.
 
+## Install
+
+Download `ClaudeUsage.zip` from the
+[latest release](https://github.com/ivaruf/claude_usage_menulet/releases/latest),
+unzip it, and move `ClaudeUsage.app` wherever you like (e.g. `/Applications`).
+
+The app is ad-hoc signed, not notarized by Apple, so macOS quarantines the
+download and will refuse to open it. Clear the quarantine flag once:
+
+```bash
+xattr -d com.apple.quarantine ClaudeUsage.app
+open ClaudeUsage.app
+```
+
+Releases are built from source by
+[GitHub Actions](.github/workflows/release.yml) — or build it yourself below,
+it takes seconds.
+
 ## How it works
 
 - Reads your Claude Code OAuth token from the macOS Keychain
@@ -31,6 +49,15 @@ open ClaudeUsage.app
 ```
 
 Requires Xcode Command Line Tools (`xcode-select --install`).
+
+## Cutting a release
+
+Push a version tag — CI builds the app, zips it, and attaches it to a GitHub
+release:
+
+```bash
+git tag v1.1 && git push origin v1.1
+```
 
 ## Start at login
 
