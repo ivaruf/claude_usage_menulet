@@ -16,21 +16,44 @@ The text turns **orange at ≥80%** and **red at ≥95%** usage.
 
 ## Install
 
+Two ways to install — pick one:
+
+### Option 1 — Download the release
+
 Download `ClaudeUsage.zip` from the
 [latest release](https://github.com/ivaruf/claude_usage_menulet/releases/latest),
 unzip it, and move `ClaudeUsage.app` wherever you like (e.g. `/Applications`).
 
-The app is ad-hoc signed, not notarized by Apple, so macOS quarantines the
-download and will refuse to open it. Clear the quarantine flag once:
+When you first open it, macOS will block it with a scary warning —
+*"Apple could not verify ClaudeUsage is free of malware"*. This is because the
+app isn't notarized by Apple (that requires a paid developer account), **not**
+because anything is wrong with it. Releases are built from source by
+[GitHub Actions](.github/workflows/release.yml).
+
+Tell macOS the app is safe, either way works:
+
+- **Terminal:** clear the quarantine flag once, then open it:
+
+  ```bash
+  xattr -d com.apple.quarantine ClaudeUsage.app
+  open ClaudeUsage.app
+  ```
+
+- **GUI:** in the warning dialog click **Done** (not "Move to Trash"!), then go
+  to **System Settings → Privacy & Security**, scroll down, and click
+  **Open Anyway**.
+
+### Option 2 — Build it yourself (takes seconds)
+
+Locally built apps are never quarantined, so there's no warning to deal with.
+Requires Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
-xattr -d com.apple.quarantine ClaudeUsage.app
+git clone https://github.com/ivaruf/claude_usage_menulet.git
+cd claude_usage_menulet
+./build.sh
 open ClaudeUsage.app
 ```
-
-Releases are built from source by
-[GitHub Actions](.github/workflows/release.yml) — or build it yourself below,
-it takes seconds.
 
 ## How it works
 
@@ -40,15 +63,6 @@ it takes seconds.
   endpoint Claude Code's own `/usage` command uses.
 - The countdown in the menu bar ticks every 10 seconds between polls.
 - No dock icon (`LSUIElement`), no dependencies — one Swift file compiled with `swiftc`.
-
-## Build & run
-
-```bash
-./build.sh
-open ClaudeUsage.app
-```
-
-Requires Xcode Command Line Tools (`xcode-select --install`).
 
 ## Cutting a release
 
