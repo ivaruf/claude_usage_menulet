@@ -1,20 +1,16 @@
-# Claude Usage — macOS menu bar widget
+<p align="center">
+  <img src="assets/icon.png" width="128" alt="Claude Usage app icon">
+</p>
+
+<h1 align="center">Claude Usage — macOS menu bar widget</h1>
 
 A tiny native menu bar app that shows your current Claude Code **session usage %**
-and a **countdown until the session resets**, e.g. `✳ 57% · 1h07m`.
+and a **countdown until the session resets**, e.g. `✳ 72% · 1h36m`.
+Click the icon for the full breakdown:
 
-Click the icon for details:
-
-```
-Session  █████░░░░░  57%   resets 12:30 (1h07m)
-Week     █░░░░░░░░░   8%   resets Wed 12 Aug 03:00
-─────────────────────────────────────────────────
-Updated 10:04:12
-Refresh Now                                    ⌘R
-─────────────────────────────────────────────────
-Start at Login
-Quit Claude Usage                              ⌘Q
-```
+<p align="center">
+  <img src="assets/hero.svg" width="640" alt="The widget in the menu bar with its dropdown menu open, showing session and weekly usage bars">
+</p>
 
 The text turns **orange at ≥80%** and **red at ≥95%** usage.
 

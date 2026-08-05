@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="270" viewBox="0 0 640 270" font-size="13">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Menu bar -->
+  <rect x="0" y="0" width="640" height="38" rx="9" fill="#1d1d1f"/>
+  <!-- widget: asterisk + title -->
+  <g stroke="#f0eee6" stroke-width="2.4" stroke-linecap="round">
+    <line x1="26" y1="12.5" x2="26" y2="25.5"/>
+    <line x1="20.4" y1="15.75" x2="31.6" y2="22.25"/>
+    <line x1="31.6" y1="15.75" x2="20.4" y2="22.25"/>
+  </g>
+  <text x="42" y="23.5" fill="#f2f2f2" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-weight="500">72% · 1h36m</text>
+  <!-- other menu extras + clock -->
+  <g fill="#8e8e93">
+    <rect x="450" y="13" width="16" height="11" rx="3"/>
+    <circle cx="486" cy="18.5" r="6"/>
+  </g>
+  <text x="624" y="23.5" text-anchor="end" fill="#cfcfcf" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif">Wed Aug 5 10:53</text>
+
+  <!-- Dropdown menu -->
+  <g filter="url(#shadow)">
+    <rect x="14" y="46" width="436" height="208" rx="12" fill="#28282a" stroke="#3d3d3f"/>
+  </g>
+
+  <g font-family="ui-monospace, 'SF Mono', Menlo, monospace">
+    <text x="32" y="80" fill="#ececec">Session</text>
+    <text x="110" y="80"><tspan fill="#D97757">███████</tspan><tspan fill="#4b4b4d">░░░</tspan></text>
+    <text x="230" y="80" text-anchor="end" fill="#ececec">72%</text>
+    <text x="248" y="80" fill="#ececec">resets 12:30 (1h36m)</text>
+
+    <text x="32" y="106" fill="#ececec">Week</text>
+    <text x="110" y="106"><tspan fill="#D97757">█</tspan><tspan fill="#4b4b4d">░░░░░░░░░</tspan></text>
+    <text x="230" y="106" text-anchor="end" fill="#ececec">8%</text>
+    <text x="248" y="106" fill="#ececec">resets Wed 12 Aug 03:00</text>
+  </g>
+
+  <line x1="30" y1="122" x2="434" y2="122" stroke="#ffffff" stroke-opacity="0.12"/>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif" font-size="13.5">
+    <text x="32" y="144" fill="#9a9a9e">Updated 10:53:12</text>
+
+    <rect x="22" y="154" width="420" height="26" rx="6" fill="#ffffff" fill-opacity="0.10"/>
+    <text x="32" y="171.5" fill="#ffffff">Refresh Now</text>
+    <text x="432" y="171.5" text-anchor="end" fill="#9a9a9e">⌘R</text>
+
+    <line x1="30" y1="190" x2="434" y2="190" stroke="#ffffff" stroke-opacity="0.12"/>
+
+    <text x="32" y="214" fill="#ececec">Start at Login</text>
+    <text x="32" y="240" fill="#ececec">Quit Claude Usage</text>
+    <text x="432" y="240" text-anchor="end" fill="#9a9a9e">⌘Q</text>
+  </g>
+</svg>
