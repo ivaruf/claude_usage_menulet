@@ -175,6 +175,8 @@ final class UsageFetcher {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
+    private var menu: NSMenu!
+    private var screenChangeWorkItem: DispatchWorkItem?
     private let fetcher = UsageFetcher()
     private var usage: Usage?
     private var lastError: FetchError?
@@ -189,18 +191,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let menuFont = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        if let button = statusItem.button {
-            if let image = NSImage(systemSymbolName: "asterisk", accessibilityDescription: "Claude usage") {
-                image.isTemplate = true
-                button.image = image
-                button.imagePosition = .imageLeft
-            }
-        }
-        statusItem.menu = buildMenu()
-
-        renderTitle()
+        menu = buildMenu()
+        setupStatusItem()
         refresh()
+
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.screenConfigurationChanged()
+        }
 
         let fetchTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             self?.refresh()
@@ -212,6 +213,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         tickTimer.tolerance = 2
         RunLoop.main.add(fetchTimer, forMode: .common)
         RunLoop.main.add(tickTimer, forMode: .common)
+    }
+
+    private func setupStatusItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem.autosaveName = "ClaudeUsage"
+        statusItem.isVisible = true
+        if let button = statusItem.button {
+            if let image = NSImage(systemSymbolName: "asterisk", accessibilityDescription: "Claude usage") {
+                image.isTemplate = true
+                button.image = image
+                button.imagePosition = .imageLeft
+            }
+        }
+        statusItem.menu = menu
+        renderTitle()
+        renderMenu()
+    }
+
+    // macOS Tahoe can drop third-party status items from the menu bar when the
+    // display configuration changes; re-assert the item once things settle.
+    private func screenConfigurationChanged() {
+        screenChangeWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.statusItem.isVisible = true
+            if self.statusItem.button?.window == nil {
+                NSStatusBar.system.removeStatusItem(self.statusItem)
+                self.setupStatusItem()
+            }
+        }
+        screenChangeWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
     }
 
     private func buildMenu() -> NSMenu {
