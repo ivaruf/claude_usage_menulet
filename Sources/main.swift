@@ -18,14 +18,18 @@ struct Usage {
 enum FetchError: Error {
     case noToken
     case unauthorized
+    case rateLimited
     case network(String)
+    case http(Int)
     case badResponse
 
     var message: String {
         switch self {
         case .noToken: return "No Claude Code credentials found in Keychain"
         case .unauthorized: return "Token expired — use Claude Code once to refresh it"
+        case .rateLimited: return "Rate-limited — will retry in a few minutes"
         case .network(let m): return "Network error: \(m)"
+        case .http(let s): return "Usage API error (HTTP \(s))"
         case .badResponse: return "Unexpected response from usage API"
         }
     }
@@ -133,7 +137,15 @@ final class UsageFetcher {
                 }
                 return
             }
-            guard status == 200, let data, let usage = Self.parseUsage(data) else {
+            if status == 429 {
+                completion(.failure(.rateLimited))
+                return
+            }
+            guard status == 200 else {
+                completion(.failure(.http(status)))
+                return
+            }
+            guard let data, let usage = Self.parseUsage(data) else {
                 completion(.failure(.badResponse))
                 return
             }
@@ -164,6 +176,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let fetcher = UsageFetcher()
     private var usage: Usage?
     private var lastError: FetchError?
+    private var backoffUntil: Date?
 
     private let sessionItem = NSMenuItem()
     private let weeklyItem = NSMenuItem()
@@ -233,9 +246,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: Refresh
 
-    @objc private func refreshClicked() { refresh() }
+    @objc private func refreshClicked() { refresh(force: true) }
 
-    private func refresh() {
+    private func refresh(force: Bool = false) {
+        if !force, let until = backoffUntil, Date() < until { return }
         fetcher.fetch { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }
@@ -243,8 +257,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case .success(let usage):
                     self.usage = usage
                     self.lastError = nil
+                    self.backoffUntil = nil
                 case .failure(let error):
                     self.lastError = error
+                    if case .rateLimited = error {
+                        self.backoffUntil = Date().addingTimeInterval(180)
+                    }
                 }
                 self.renderTitle()
                 self.renderMenu()

@@ -44,3 +44,6 @@ the .app afterwards, toggle it off and on again.)
 - **Shows `—` / "Token expired"** — the OAuth token in the Keychain has expired.
   Run any Claude Code command; it refreshes the token, then hit **Refresh Now**.
 - **Shows `…`** — still loading, or no network.
+- **"Rate-limited — will retry in a few minutes"** — the usage endpoint throttles
+  bursts of requests. The widget backs off for 3 minutes automatically. Make sure
+  you don't have more than one copy of the widget running (`pgrep -fl ClaudeUsage`).
