@@ -18,7 +18,7 @@ struct Usage {
 enum FetchError: Error {
     case noToken
     case unauthorized
-    case rateLimited
+    case rateLimited(retryAfter: TimeInterval?)
     case network(String)
     case http(Int)
     case badResponse
@@ -138,7 +138,9 @@ final class UsageFetcher {
                 return
             }
             if status == 429 {
-                completion(.failure(.rateLimited))
+                let retryAfter = (response as? HTTPURLResponse)?
+                    .value(forHTTPHeaderField: "Retry-After").flatMap(TimeInterval.init)
+                completion(.failure(.rateLimited(retryAfter: retryAfter)))
                 return
             }
             guard status == 200 else {
@@ -200,10 +202,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         renderTitle()
         refresh()
 
-        let fetchTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        let fetchTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             self?.refresh()
         }
-        fetchTimer.tolerance = 5
+        fetchTimer.tolerance = 30
         let tickTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
             self?.renderTitle()
         }
@@ -260,8 +262,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.backoffUntil = nil
                 case .failure(let error):
                     self.lastError = error
-                    if case .rateLimited = error {
-                        self.backoffUntil = Date().addingTimeInterval(180)
+                    if case .rateLimited(let retryAfter) = error {
+                        self.backoffUntil = Date().addingTimeInterval(retryAfter ?? 600)
                     }
                 }
                 self.renderTitle()
