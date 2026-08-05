@@ -5,7 +5,7 @@
 <h1 align="center">Claude Usage — macOS menu bar widget</h1>
 
 A tiny native menu bar app that shows your current Claude Code **session usage %**
-and a **countdown until the session resets**, e.g. `✳ 72% · 1h36m`.
+and a **countdown until the session resets**, e.g. `✳ 83% · 1h36m`.
 Click the icon for the full breakdown:
 
 <p align="center">

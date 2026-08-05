@@ -13,7 +13,7 @@
     <line x1="20.4" y1="15.75" x2="31.6" y2="22.25"/>
     <line x1="31.6" y1="15.75" x2="20.4" y2="22.25"/>
   </g>
-  <text x="42" y="23.5" fill="#f2f2f2" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-weight="500">72% · 1h36m</text>
+  <text x="42" y="23.5" fill="#ff9f0a" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-weight="500">83% · 1h36m</text>
   <!-- other menu extras + clock -->
   <g fill="#8e8e93">
     <rect x="450" y="13" width="16" height="11" rx="3"/>
@@ -27,10 +27,10 @@
   </g>
 
   <g font-family="ui-monospace, 'SF Mono', Menlo, monospace">
-    <text x="32" y="80" fill="#ececec">Session</text>
-    <text x="110" y="80"><tspan fill="#ececec">███████</tspan><tspan fill="#4b4b4d">░░░</tspan></text>
-    <text x="230" y="80" text-anchor="end" fill="#ececec">72%</text>
-    <text x="248" y="80" fill="#ececec">resets 12:30 (1h36m)</text>
+    <text x="32" y="80" fill="#ff9f0a">Session</text>
+    <text x="110" y="80"><tspan fill="#ff9f0a">████████</tspan><tspan fill="#4b4b4d">░░</tspan></text>
+    <text x="230" y="80" text-anchor="end" fill="#ff9f0a">83%</text>
+    <text x="248" y="80" fill="#ff9f0a">resets 12:30 (1h36m)</text>
 
     <text x="32" y="106" fill="#ececec">Week</text>
     <text x="110" y="106"><tspan fill="#ececec">█</tspan><tspan fill="#4b4b4d">░░░░░░░░░</tspan></text>
