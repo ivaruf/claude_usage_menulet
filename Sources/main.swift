@@ -187,6 +187,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let opusItem = NSMenuItem()
     private let updatedItem = NSMenuItem()
     private var loginItem: NSMenuItem!
+    private var compactItem: NSMenuItem!
+    private var compactMode = UserDefaults.standard.bool(forKey: "compactMode")
+
+    private lazy var statusIcon: NSImage? = {
+        let image = NSImage(systemSymbolName: "asterisk", accessibilityDescription: "Claude usage")
+        image?.isTemplate = true
+        return image
+    }()
 
     private let menuFont = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
 
@@ -219,13 +227,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.autosaveName = "ClaudeUsage"
         statusItem.isVisible = true
-        if let button = statusItem.button {
-            if let image = NSImage(systemSymbolName: "asterisk", accessibilityDescription: "Claude usage") {
-                image.isTemplate = true
-                button.image = image
-                button.imagePosition = .imageLeft
-            }
-        }
+        statusItem.button?.imagePosition = .imageLeft
         statusItem.menu = menu
         renderTitle()
         renderMenu()
@@ -267,6 +269,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(refreshItem)
 
         menu.addItem(.separator())
+
+        compactItem = NSMenuItem(title: "Compact Mode", action: #selector(toggleCompact), keyEquivalent: "")
+        compactItem.target = self
+        compactItem.state = compactMode ? .on : .off
+        menu.addItem(compactItem)
 
         loginItem = NSMenuItem(title: "Start at Login", action: #selector(toggleLogin), keyEquivalent: "")
         loginItem.target = self
@@ -310,20 +317,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func renderTitle() {
         guard let button = statusItem.button else { return }
 
+        // Compact mode drops the icon and countdown to minimize menu bar
+        // footprint — macOS silently hides items that don't fit.
+        button.image = compactMode ? nil : statusIcon
+        let prefix = compactMode ? "" : " "
+
         let text: String
         let color: NSColor
         if let session = usage?.session {
             var parts = ["\(Int(session.percent.rounded()))%"]
-            if let resetsAt = session.resetsAt {
+            if !compactMode, let resetsAt = session.resetsAt {
                 parts.append(countdownString(to: resetsAt))
             }
-            text = " " + parts.joined(separator: " · ")
+            text = prefix + parts.joined(separator: " · ")
             color = colorFor(percent: session.percent)
         } else if lastError != nil {
-            text = " —"
+            text = prefix + "—"
             color = .labelColor
         } else {
-            text = " …"
+            text = prefix + "…"
             color = .labelColor
         }
 
@@ -387,6 +399,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             updatedItem.title = "Loading…"
         }
+    }
+
+    // MARK: Compact mode
+
+    @objc private func toggleCompact() {
+        compactMode.toggle()
+        UserDefaults.standard.set(compactMode, forKey: "compactMode")
+        compactItem.state = compactMode ? .on : .off
+        renderTitle()
     }
 
     // MARK: Login item
