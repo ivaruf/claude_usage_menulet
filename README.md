@@ -6,7 +6,8 @@
 
 A tiny native menu bar app that shows your current Claude Code **session usage %**
 and a **countdown until the session resets**, e.g. `✳ 83% · 1h36m`.
-Click the icon for the full breakdown:
+Click the icon for the full breakdown — session, weekly, and a row per model
+that has its own weekly limit (e.g. Fable), each with its reset time:
 
 <p align="center">
   <img src="assets/hero.svg" width="640" alt="The widget in the menu bar with its dropdown menu open, showing session and weekly usage bars">

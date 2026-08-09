@@ -4,6 +4,7 @@ import ServiceManagement
 // MARK: - Model
 
 struct LimitInfo {
+    let label: String
     let percent: Double
     let resetsAt: Date?
 }
@@ -11,7 +12,9 @@ struct LimitInfo {
 struct Usage {
     let session: LimitInfo?
     let weekly: LimitInfo?
-    let weeklyOpus: LimitInfo?
+    /// Weekly limits that only cover one model (e.g. Fable). Which models get
+    /// their own limit changes over time, so these are rendered as reported.
+    let scoped: [LimitInfo]
     let fetchedAt: Date
 }
 
@@ -55,6 +58,10 @@ func countdownString(to date: Date) -> String {
     if seconds >= 3600 { return "\(h)h\(String(format: "%02d", m))m" }
     if seconds >= 60 { return "\(m)m" }
     return "<1m"
+}
+
+func pad(_ label: String, to width: Int) -> String {
+    label + String(repeating: " ", count: max(1, width - label.count))
 }
 
 func progressBar(_ percent: Double) -> String {
@@ -157,15 +164,53 @@ final class UsageFetcher {
 
     private static func parseUsage(_ data: Data) -> Usage? {
         guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
-        func limit(_ key: String) -> LimitInfo? {
+
+        if let limits = obj["limits"] as? [[String: Any]], !limits.isEmpty {
+            return parseLimits(limits)
+        }
+        return parseLegacyKeys(obj)
+    }
+
+    /// The `limits` array is the shape the usage page itself renders: one entry
+    /// per limit, with per-model limits carrying a `scope`.
+    private static func parseLimits(_ limits: [[String: Any]]) -> Usage {
+        var session: LimitInfo?
+        var weekly: LimitInfo?
+        var scoped: [LimitInfo] = []
+
+        for entry in limits {
+            let percent = (entry["percent"] as? NSNumber)?.doubleValue ?? 0
+            let resetsAt = parseISODate(entry["resets_at"] as? String)
+            switch entry["kind"] as? String {
+            case "session":
+                session = LimitInfo(label: "Session", percent: percent, resetsAt: resetsAt)
+            case "weekly_all":
+                weekly = LimitInfo(label: "Week", percent: percent, resetsAt: resetsAt)
+            case "weekly_scoped":
+                let scope = entry["scope"] as? [String: Any]
+                let model = (scope?["model"] as? [String: Any])?["display_name"] as? String
+                let surface = (scope?["surface"] as? [String: Any])?["display_name"] as? String
+                scoped.append(LimitInfo(label: model ?? surface ?? "Weekly",
+                                        percent: percent, resetsAt: resetsAt))
+            default:
+                break
+            }
+        }
+        return Usage(session: session, weekly: weekly, scoped: scoped, fetchedAt: Date())
+    }
+
+    /// Fallback for older responses that only had top-level per-limit objects.
+    private static func parseLegacyKeys(_ obj: [String: Any]) -> Usage {
+        func limit(_ key: String, _ label: String) -> LimitInfo? {
             guard let dict = obj[key] as? [String: Any] else { return nil }
             let percent = (dict["utilization"] as? NSNumber)?.doubleValue ?? 0
-            return LimitInfo(percent: percent, resetsAt: parseISODate(dict["resets_at"] as? String))
+            return LimitInfo(label: label, percent: percent,
+                             resetsAt: parseISODate(dict["resets_at"] as? String))
         }
         return Usage(
-            session: limit("five_hour"),
-            weekly: limit("seven_day"),
-            weeklyOpus: limit("seven_day_opus"),
+            session: limit("five_hour", "Session"),
+            weekly: limit("seven_day", "Week"),
+            scoped: [limit("seven_day_opus", "Opus"), limit("seven_day_sonnet", "Sonnet")].compactMap { $0 },
             fetchedAt: Date()
         )
     }
@@ -184,7 +229,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let sessionItem = NSMenuItem()
     private let weeklyItem = NSMenuItem()
-    private let opusItem = NSMenuItem()
+    private var scopedItems: [NSMenuItem] = []
     private let updatedItem = NSMenuItem()
     private var loginItem: NSMenuItem!
     private var compactItem: NSMenuItem!
@@ -253,11 +298,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.autoenablesItems = false
 
-        for item in [sessionItem, weeklyItem, opusItem] {
+        for item in [sessionItem, weeklyItem] {
             item.isEnabled = true
             menu.addItem(item)
         }
-        opusItem.isHidden = true
 
         menu.addItem(.separator())
 
@@ -353,8 +397,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let dayFormatter = DateFormatter()
         dayFormatter.setLocalizedDateFormatFromTemplate("EEE d MMM HH:mm")
 
-        func line(_ label: String, _ info: LimitInfo, _ formatter: DateFormatter, showCountdown: Bool) -> NSAttributedString {
-            var text = String(format: "%-8s", (label as NSString).utf8String!)
+        let scoped = usage?.scoped ?? []
+        // Keep the label column aligned however many scoped limits show up.
+        let labelWidth = max(8, (scoped.map(\.label.count).max() ?? 0) + 1)
+
+        func line(_ info: LimitInfo, _ formatter: DateFormatter, showCountdown: Bool) -> NSAttributedString {
+            var text = pad(info.label, to: labelWidth)
                 + progressBar(info.percent)
                 + String(format: " %3d%%", Int(info.percent.rounded()))
             if let resetsAt = info.resetsAt {
@@ -370,23 +418,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         if let session = usage?.session {
-            sessionItem.attributedTitle = line("Session", session, timeFormatter, showCountdown: true)
+            sessionItem.attributedTitle = line(session, timeFormatter, showCountdown: true)
         } else {
             sessionItem.attributedTitle = NSAttributedString(string: "Session: no data", attributes: [.font: menuFont])
         }
 
         if let weekly = usage?.weekly {
-            weeklyItem.attributedTitle = line("Week", weekly, dayFormatter, showCountdown: false)
+            weeklyItem.attributedTitle = line(weekly, dayFormatter, showCountdown: false)
             weeklyItem.isHidden = false
         } else {
             weeklyItem.isHidden = true
         }
 
-        if let opus = usage?.weeklyOpus {
-            opusItem.attributedTitle = line("Opus", opus, dayFormatter, showCountdown: false)
-            opusItem.isHidden = false
-        } else {
-            opusItem.isHidden = true
+        syncScopedItemCount(to: scoped.count)
+        for (item, info) in zip(scopedItems, scoped) {
+            item.attributedTitle = line(info, dayFormatter, showCountdown: false)
         }
 
         if let error = lastError {
@@ -398,6 +444,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             updatedItem.title = "Updated \(f.string(from: usage.fetchedAt))"
         } else {
             updatedItem.title = "Loading…"
+        }
+    }
+
+    /// Adds or removes rows below "Week" so there is exactly one per scoped limit.
+    private func syncScopedItemCount(to count: Int) {
+        while scopedItems.count > count {
+            menu.removeItem(scopedItems.removeLast())
+        }
+        while scopedItems.count < count {
+            let item = NSMenuItem()
+            item.isEnabled = true
+            menu.insertItem(item, at: menu.index(of: weeklyItem) + scopedItems.count + 1)
+            scopedItems.append(item)
         }
     }
 
